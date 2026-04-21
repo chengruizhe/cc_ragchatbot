@@ -1,0 +1,52 @@
+sequenceDiagram
+    participant U as User (Browser)
+    participant API as FastAPI (app.py)
+    participant RAG as RAGSystem (rag_system.py)
+    participant SM as SessionManager
+    participant AI as AIGenerator (ai_generator.py)
+    participant Claude as Claude API
+    participant TM as ToolManager (search_tools.py)
+    participant VS as VectorStore (vector_store.py)
+    participant DB as ChromaDB
+
+    U->>API: POST /api/query { query, session_id }
+    API->>SM: create_session() if no session_id
+    API->>RAG: query(query, session_id)
+
+    RAG->>SM: get_conversation_history(session_id)
+    SM-->>RAG: formatted history (last 2 exchanges)
+
+    RAG->>AI: generate_response(prompt, history, tools)
+
+    AI->>Claude: messages.create()<br/>[system prompt + history + user query + tool def]
+
+    alt General knowledge question
+        Claude-->>AI: stop_reason = "end_turn"
+        AI-->>RAG: answer text
+    else Course-specific question
+        Claude-->>AI: stop_reason = "tool_use"<br/>{ query, course_name?, lesson_number? }
+
+        AI->>TM: execute_tool("search_course_content", ...)
+
+        opt course_name provided
+            TM->>VS: _resolve_course_name(course_name)
+            VS->>DB: query course_catalog<br/>(semantic name match)
+            DB-->>VS: best matching course title
+        end
+
+        TM->>VS: search(query, course_title?, lesson_number?)
+        VS->>DB: query course_content<br/>(vector similarity, top-5 chunks)
+        DB-->>VS: matching chunks + metadata
+        VS-->>TM: SearchResults
+        TM-->>AI: formatted chunks as tool_result<br/>"[CourseName - Lesson N]\n<text>"
+
+        AI->>Claude: messages.create()<br/>[original messages + tool_result]
+        Claude-->>AI: final answer text
+        AI-->>RAG: answer text
+    end
+
+    RAG->>TM: get_last_sources()
+    TM-->>RAG: ["CourseName - Lesson N", ...]
+    RAG->>SM: add_exchange(session_id, query, answer)
+    RAG-->>API: (answer, sources)
+    API-->>U: { answer, sources, session_id }
