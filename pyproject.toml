@@ -13,3 +13,11 @@ dependencies = [
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=26.3.1",
+]
+
+[tool.black]
+target-version = ["py313"]
