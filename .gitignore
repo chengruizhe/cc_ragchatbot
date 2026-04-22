@@ -29,3 +29,7 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code (personal/scratch — commands/ is shared)
+.claude/settings.local.json
+.trees/
