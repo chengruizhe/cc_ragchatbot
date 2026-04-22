@@ -101,6 +101,23 @@ header h1 {
     margin-top: 0.5rem;
 }
 
+/* Banner */
+.banner {
+    background: var(--surface);
+    border-bottom: 2px solid var(--primary-color);
+    padding: 0.875rem 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.banner-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: 0.5px;
+}
+
 /* Main Content Area with Sidebar */
 .main-content {
     flex: 1;
